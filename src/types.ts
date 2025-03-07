@@ -1,4 +1,4 @@
-import { OpenAPIV3 } from 'openapi-types';
+import { z } from 'zod';
 
 export interface ApiGroup {
   name: string;
@@ -15,7 +15,7 @@ export interface ApiInfo {
 }
 
 export interface ApiDetail extends ApiInfo {
-  parameters?: OpenAPIV3.ParameterObject[];
+  parameters?: any[];
   requestBody?: any;
   responses?: Record<string, any>;
 }
@@ -24,6 +24,7 @@ export interface ApiSearchResult {
   path: string;
   method: string;
   summary?: string;
+  description?: string;
   tags?: string[];
   score: number;
 }
@@ -38,6 +39,13 @@ export interface ApiSearchResultSummary {
   path: string;
   method: string;
   summary?: string;
+}
+
+export interface MCPToolDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, z.ZodType>;
+  handler: (params: Record<string, any>) => Promise<any>;
 }
 
 export type ToolParameters = 

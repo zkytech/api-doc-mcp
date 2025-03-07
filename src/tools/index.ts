@@ -1,85 +1,91 @@
+import { z } from 'zod';
 import { OpenApiService } from '../services/OpenApiService';
-import { Tool, ToolParameters } from '../types';
+import { MCPToolDefinition } from '../types';
 
 const openApiService = OpenApiService.getInstance();
 
-export const tools: Record<string, Tool> = {
+export const tools: Record<string, MCPToolDefinition> = {
   listApiGroups: {
+    name: 'listApiGroups',
     description: 'List all available API groups',
     parameters: {},
-    handler: async (params: ToolParameters) => {
+    handler: async () => {
       const groups = openApiService.getApiGroups();
-      return groups.map(group => ({
-        name: group.name,
-        description: group.description,
-        apiCount: group.apis.length
-      }));
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(groups.map(group => ({
+            name: group.name,
+            description: group.description,
+            apiCount: group.apis.length
+          })), null, 2)
+        }]
+      };
     }
   },
 
   listGroupApis: {
+    name: 'listGroupApis',
     description: 'List all APIs in the specified group',
     parameters: {
-      groupName: {
-        type: 'string',
-        description: 'API group name, for example: user, product'
-      }
+      groupName: z.string().describe('API group name, for example: user, product')
     },
-    handler: async (params: ToolParameters) => {
-      if (!('groupName' in params)) {
-        throw new Error('Missing groupName parameter');
-      }
+    handler: async (params) => {
       const apis = openApiService.getGroupApis(params.groupName);
-      return apis.map(api => ({
-        path: api.path,
-        method: api.method,
-        summary: api.summary
-      }));
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(apis.map(api => ({
+            path: api.path,
+            method: api.method,
+            description: api.description,
+            summary: api.summary
+          })), null, 2)
+        }]
+      };
     }
   },
 
   getApiDetail: {
+    name: 'getApiDetail',
     description: 'Get detailed information of the specified API',
     parameters: {
-      path: {
-        type: 'string',
-        description: 'API path'
-      },
-      method: {
-        type: 'string',
-        description: 'HTTP method'
-      }
+      path: z.string().describe('API path'),
+      method: z.string().describe('HTTP method')
     },
-    handler: async (params: ToolParameters) => {
-      if (!('path' in params) || !('method' in params)) {
-        throw new Error('Missing path or method parameter');
-      }
+    handler: async (params) => {
       const detail = openApiService.getApiDetail(params.path, params.method);
       if (!detail) {
         throw new Error('Specified API not found');
       }
-      return detail;
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(detail, null, 2)
+        }]
+      };
     }
   },
 
   searchApis: {
+    name: 'searchApis',
     description: 'Search API',
     parameters: {
-      keyword: {
-        type: 'string',
-        description: 'Search keyword'
-      }
+      keyword: z.string().describe('Search keyword')
     },
-    handler: async (params: ToolParameters) => {
-      if (!('keyword' in params)) {
-        throw new Error('Missing keyword parameter');
-      }
+    handler: async (params) => {
       const results = openApiService.searchApis(params.keyword);
-      return results.map(result => ({
-        path: result.path,
-        method: result.method,
-        summary: result.summary
-      }));
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(results.map(result => ({
+            path: result.path,
+            method: result.method,
+            summary: result.summary,
+            description: result.description,
+          })), null, 2)
+        }]
+      };
     }
   }
 }; 

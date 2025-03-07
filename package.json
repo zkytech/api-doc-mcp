@@ -1,6 +1,6 @@
 {
   "name": "api-doc-mcp",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "MCP Server for OpenAPI documentation management",
   "main": "dist/index.js",
   "bin": {
@@ -13,14 +13,16 @@
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.1.0",
+    "@modelcontextprotocol/sdk": "^1.6.1",
     "@types/node": "^20.11.24",
     "axios": "^1.6.7",
     "openapi-types": "^12.1.3",
     "swagger-parser": "^10.0.3",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/swagger-parser": "^4.0.3"
+    "@types/swagger-parser": "^4.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
   }
 }

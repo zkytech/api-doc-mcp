@@ -125,6 +125,7 @@ export class OpenApiService {
             path,
             method: method.toUpperCase(),
             summary: operationObject.summary,
+            description: operationObject.description,
             tags: operationObject.tags,
             score
           });

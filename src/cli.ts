@@ -1,88 +1,55 @@
 #!/usr/bin/env node
-import { tools } from './tools';
-import { Tool, ToolParameters } from './types';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { OpenApiService } from './services/OpenApiService';
+import { tools } from './tools';
 
 const openApiService = OpenApiService.getInstance();
 
-async function showHelp() {
-  console.log('Usage: api-doc-mcp <API_DOC_URL> <command> [parameters]');
-  console.log('\nAvailable commands:');
-  Object.entries(tools).forEach(([name, tool]) => {
-    console.log(`\n${name}:`);
-    console.log(`  Description: ${tool.description}`);
-    if (Object.keys(tool.parameters).length > 0) {
-      console.log('  Parameters:');
-      Object.entries(tool.parameters).forEach(([paramName, param]) => {
-        console.log(`    - ${paramName}: ${param.description}`);
-      });
-    }
-  });
-}
-
 async function main() {
-  // Get URL, tool name and parameters from command line arguments
-  const [,, apiUrl, toolName, ...args] = process.argv;
+  const [,, apiUrl] = process.argv;
 
-  if (!apiUrl || !toolName) {
-    await showHelp();
+  if (!apiUrl) {
+    console.log('Usage: api-doc-mcp <API_DOC_URL>');
     process.exit(1);
   }
 
-  // Load API documentation first
   try {
+    // 加载 API 文档
     await openApiService.loadSpec(apiUrl);
-  } catch (error) {
-    console.error('Failed to load API documentation:', error instanceof Error ? error.message : error);
-    process.exit(1);
-  }
-
-  const tool = tools[toolName];
-  if (!tool) {
-    console.error(`Command not found: ${toolName}`);
-    await showHelp();
-    process.exit(1);
-  }
-
-  try {
-    // Parse parameters
-    const params: Record<string, string> = {};
-    args.forEach((arg, index) => {
-      if (index % 2 === 0 && args[index + 1]) {
-        const key = arg.replace(/^--/, '');
-        params[key] = args[index + 1];
+    
+    // 创建 MCP 服务器
+    const server = new McpServer({
+      name: 'api-doc-mcp',
+      version: '1.0.0'
+    }, {
+      capabilities: {
+        tools: {}
       }
     });
 
-    // Construct parameter object based on tool parameter definitions
-    let toolParams: ToolParameters;
-    const paramKeys = Object.keys(tool.parameters);
+    // 注册所有工具
+    Object.entries(tools).forEach(([name, tool]) => {
+      // server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      //   if (request.params.name === name) {
+      //     return tool.handler(request.params.arguments || {});
+      //   }
+      //   throw new Error(`Tool ${request.params.name} not found`);
+      // });
+      server.tool(
+        name,
+        tool.parameters,
+        tool.handler
+      )
+    });
+
+    // 启动服务器
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
     
-    if (paramKeys.length === 0) {
-      toolParams = {};
-    } else if (paramKeys.includes('url')) {
-      toolParams = { url: params.url };
-    } else if (paramKeys.includes('groupName')) {
-      toolParams = { groupName: params.groupName };
-    } else if (paramKeys.includes('path') && paramKeys.includes('method')) {
-      toolParams = { path: params.path, method: params.method };
-    } else if (paramKeys.includes('keyword')) {
-      toolParams = { keyword: params.keyword };
-    } else {
-      throw new Error('Invalid tool parameters');
-    }
-
-    // Validate required parameters
-    for (const key of paramKeys) {
-      if (!(key in (toolParams as Record<string, unknown>))) {
-        throw new Error(`Missing required parameter: ${key}`);
-      }
-    }
-
-    const result = await tool.handler(toolParams);
-    console.log(JSON.stringify(result, null, 2));
+    console.log('MCP Server is running...');
   } catch (error) {
-    console.error('Execution error:', error instanceof Error ? error.message : error);
+    console.error('Error:', error instanceof Error ? error.message : error);
     process.exit(1);
   }
 }
