@@ -6,6 +6,7 @@ import { ApiGroup, ApiInfo, ApiDetail, ApiSearchResult } from '../types';
 export class OpenApiService {
   private static instance: OpenApiService;
   private spec: OpenAPIV3.Document | null = null;
+  private dereferencedSpec: OpenAPIV3.Document | null = null;
   private apiUrl: string = '';
 
   private constructor() {}
@@ -21,6 +22,7 @@ export class OpenApiService {
     this.apiUrl = url;
     const response = await axios.get(url);
     this.spec = await SwaggerParser.parse(response.data) as OpenAPIV3.Document;
+    this.dereferencedSpec = await SwaggerParser.dereference(response.data) as OpenAPIV3.Document;
   }
 
   getApiGroups(): ApiGroup[] {
@@ -72,11 +74,11 @@ export class OpenApiService {
   }
 
   getApiDetail(path: string, method: string): ApiDetail | null {
-    if (!this.spec || !this.spec.paths || !this.spec.paths[path]) {
+    if (!this.dereferencedSpec || !this.dereferencedSpec.paths || !this.dereferencedSpec.paths[path]) {
       return null;
     }
 
-    const pathItem = this.spec.paths[path];
+    const pathItem = this.dereferencedSpec.paths[path];
     const methodKey = method.toLowerCase() as OpenAPIV3.HttpMethods;
     const operation = pathItem[methodKey] as OpenAPIV3.OperationObject | undefined;
 
