@@ -11,10 +11,12 @@ This toolkit provides the following features:
 3. Get API details
 4. Search APIs
 
-## Installation
+## Usage
+
+### For cursor
 
 ```bash
-npm install api-doc-mcp
+npx -y api-doc-mcp http://localhost:8000/swagger.json
 ```
 
 ## Build
