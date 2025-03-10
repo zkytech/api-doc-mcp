@@ -10,13 +10,19 @@ This toolkit provides the following features:
 2. List APIs in a specified group
 3. Get API details
 4. Search APIs
+5. Support both remote API docs and local JSON files
+6. Auto-refresh API documentation on each request
 
 ## Usage
 
 ### For cursor
 
 ```bash
+# 使用远程 API 文档
 npx -y api-doc-mcp http://localhost:8000/swagger.json
+
+# 使用本地 JSON 文件
+npx -y api-doc-mcp ./swagger.json
 ```
 
 ## Build
@@ -30,7 +36,7 @@ npm run build
 ### Command Format
 
 ```bash
-npx api-doc-mcp [API_DOC_URL] <command> [parameters]
+npx api-doc-mcp <API_DOC_URL_OR_FILE_PATH>
 ```
 
 ### Examples
@@ -40,24 +46,14 @@ npx api-doc-mcp [API_DOC_URL] <command> [parameters]
 npx api-doc-mcp
 ```
 
-2. List all API groups:
+2. List all API groups (Remote API):
 ```bash
-npx api-doc-mcp https://api.example.com/swagger.json listApiGroups
+npx api-doc-mcp https://api.example.com/swagger.json
 ```
 
-3. List APIs in a specified group:
+3. List all API groups (Local file):
 ```bash
-npx api-doc-mcp https://api.example.com/swagger.json listGroupApis --groupName user
-```
-
-4. Get API details:
-```bash
-npx api-doc-mcp https://api.example.com/swagger.json getApiDetail --path /users --method get
-```
-
-5. Search APIs:
-```bash
-npx api-doc-mcp https://api.example.com/swagger.json searchApis --keyword user
+npx api-doc-mcp ./swagger.json
 ```
 
 ## Development

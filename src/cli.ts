@@ -4,19 +4,21 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { OpenApiService } from './services/OpenApiService';
 import { tools } from './tools';
 
-const openApiService = OpenApiService.getInstance();
-
 async function main() {
-  const [,, apiUrl] = process.argv;
+  const [,, source] = process.argv;
 
-  if (!apiUrl) {
-    console.log('Usage: api-doc-mcp <API_DOC_URL>');
+  if (!source) {
+    console.log('Usage: api-doc-mcp <API_DOC_URL_OR_FILE_PATH>');
+    console.log('Examples:');
+    console.log('  api-doc-mcp https://api.example.com/swagger.json');
+    console.log('  api-doc-mcp ./swagger.json');
     process.exit(1);
   }
 
   try {
+    const openApiService = new OpenApiService();
     // 加载 API 文档
-    await openApiService.loadSpec(apiUrl);
+    await openApiService.loadSpec(source);
     
     // 创建 MCP 服务器
     const server = new McpServer({
@@ -30,16 +32,14 @@ async function main() {
 
     // 注册所有工具
     Object.entries(tools).forEach(([name, tool]) => {
-      // server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      //   if (request.params.name === name) {
-      //     return tool.handler(request.params.arguments || {});
-      //   }
-      //   throw new Error(`Tool ${request.params.name} not found`);
-      // });
       server.tool(
         name,
         tool.parameters,
-        tool.handler
+        async (args) => {
+          // 每次调用工具时重新加载文档
+          await openApiService.loadSpec(source);
+          return tool.handler(args);
+        }
       )
     });
 

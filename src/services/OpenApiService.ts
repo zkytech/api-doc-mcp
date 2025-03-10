@@ -4,25 +4,29 @@ import axios from 'axios';
 import { ApiGroup, ApiInfo, ApiDetail, ApiSearchResult } from '../types';
 
 export class OpenApiService {
-  private static instance: OpenApiService;
   private spec: OpenAPIV3.Document | null = null;
   private dereferencedSpec: OpenAPIV3.Document | null = null;
   private apiUrl: string = '';
 
-  private constructor() {}
+  constructor() {}
 
-  public static getInstance(): OpenApiService {
-    if (!OpenApiService.instance) {
-      OpenApiService.instance = new OpenApiService();
+  async loadSpec(source: string): Promise<void> {
+    this.apiUrl = source;
+    let data;
+    
+    if (source.startsWith('http://') || source.startsWith('https://')) {
+      const response = await axios.get(source);
+      data = response.data;
+    } else {
+      // 如果不是 URL，则认为是本地文件路径
+      const fs = require('fs');
+      const path = require('path');
+      const resolvedPath = path.resolve(source);
+      data = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
     }
-    return OpenApiService.instance;
-  }
-
-  async loadSpec(url: string): Promise<void> {
-    this.apiUrl = url;
-    const response = await axios.get(url);
-    this.spec = await SwaggerParser.parse(response.data) as OpenAPIV3.Document;
-    this.dereferencedSpec = await SwaggerParser.dereference(response.data) as OpenAPIV3.Document;
+    
+    this.spec = await SwaggerParser.parse(data) as OpenAPIV3.Document;
+    this.dereferencedSpec = await SwaggerParser.dereference(data) as OpenAPIV3.Document;
   }
 
   getApiGroups(): ApiGroup[] {
