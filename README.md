@@ -18,10 +18,10 @@ This toolkit provides the following features:
 ### For cursor
 
 ```bash
-# 使用远程 API 文档
+# remote api
 npx -y api-doc-mcp http://localhost:8000/swagger.json
 
-# 使用本地 JSON 文件
+# local file
 npx -y api-doc-mcp ./swagger.json
 ```
 
